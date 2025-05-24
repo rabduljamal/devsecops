@@ -1,0 +1,117 @@
+name: GitOps Image Update
+
+on:
+  repository_dispatch:
+    types: [image-update]
+
+jobs:
+  update-image:
+    name: Update Container Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "GitOps Bot"
+          git config --global user.email "gitops-bot@example.com"
+
+      - name: Extract image information
+        id: image-info
+        run: |
+          echo "image=${{ github.event.client_payload.image }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ github.event.client_payload.tag }}" >> $GITHUB_OUTPUT
+          echo "source_repo=${{ github.event.client_payload.source_repo }}" >> $GITHUB_OUTPUT
+          echo "commit_sha=${{ github.event.client_payload.commit_sha }}" >> $GITHUB_OUTPUT
+          echo "short_sha=$(echo '${{ github.event.client_payload.commit_sha }}' | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Update Kubernetes manifests
+        run: |
+          # Update deployment.yaml dengan image baru
+          sed -i "s|image: .*devsecops-pipeline.*|image: ${{ steps.image-info.outputs.image }}@${{ steps.image-info.outputs.tag }}|g" k8s/deployment.yaml
+
+          # Update kustomization.yaml jika ada
+          if [ -f k8s/kustomization.yaml ]; then
+            yq eval '.images[0].newTag = "${{ steps.image-info.outputs.short_sha }}"' -i k8s/kustomization.yaml
+          fi
+
+      - name: Update Helm values (if using Helm)
+        if: hashFiles('helm/*/values.yaml') != ''
+        run: |
+          # Update values.yaml untuk Helm
+          yq eval '.image.repository = "${{ steps.image-info.outputs.image }}"' -i helm/devsecops-pipeline/values.yaml
+          yq eval '.image.tag = "${{ steps.image-info.outputs.short_sha }}"' -i helm/devsecops-pipeline/values.yaml
+
+      - name: Update ArgoCD Application (if using ArgoCD)
+        if: hashFiles('argocd/*.yaml') != ''
+        run: |
+          # Update ArgoCD application manifest
+          yq eval '.spec.source.helm.parameters[0].value = "${{ steps.image-info.outputs.image }}@${{ steps.image-info.outputs.tag }}"' -i argocd/application.yaml
+
+      - name: Commit and push changes
+        run: |
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "🚀 Update image to ${{ steps.image-info.outputs.short_sha }}
+
+          - Source: ${{ steps.image-info.outputs.source_repo }}
+          - Commit: ${{ steps.image-info.outputs.commit_sha }}
+          - Image: ${{ steps.image-info.outputs.image }}@${{ steps.image-info.outputs.tag }}
+          - Triggered by: ${{ github.event.client_payload.commit_message }}"
+
+          git push origin main
+
+      - name: Create Pull Request (Alternative approach)
+        if: false # Set to true if you prefer PR-based GitOps
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            🚀 Update image to ${{ steps.image-info.outputs.short_sha }}
+
+            - Source: ${{ steps.image-info.outputs.source_repo }}
+            - Commit: ${{ steps.image-info.outputs.commit_sha }}
+            - Image: ${{ steps.image-info.outputs.image }}@${{ steps.image-info.outputs.tag }}
+          title: "Update DevSecOps Pipeline image to ${{ steps.image-info.outputs.short_sha }}"
+          body: |
+            ## 🚀 Automated Image Update
+
+            This PR updates the DevSecOps Pipeline container image.
+
+            ### Changes
+            - **New Image**: `${{ steps.image-info.outputs.image }}@${{ steps.image-info.outputs.tag }}`
+            - **Source Repository**: ${{ steps.image-info.outputs.source_repo }}
+            - **Source Commit**: ${{ steps.image-info.outputs.commit_sha }}
+
+            ### Trigger
+            ```
+            ${{ github.event.client_payload.commit_message }}
+            ```
+
+            This PR was automatically created by the GitOps workflow.
+          branch: update-image-${{ steps.image-info.outputs.short_sha }}
+          delete-branch: true
+
+      - name: Notify ArgoCD sync (if using ArgoCD webhook)
+        run: |
+          if [ ! -z "${{ secrets.ARGOCD_WEBHOOK_URL }}" ]; then
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${{ secrets.ARGOCD_TOKEN }}" \
+              "${{ secrets.ARGOCD_WEBHOOK_URL }}" \
+              -d '{
+                "application": "devsecops-pipeline",
+                "revision": "HEAD"
+              }'
+          fi

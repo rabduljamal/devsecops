@@ -1,0 +1,24 @@
+---
+# k8s/network-policy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: devsecops-pipeline-netpol
+  namespace: devsecops-pipeline
+spec:
+  podSelector:
+    matchLabels:
+      app: devsecops-pipeline
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - {} # Allow all outbound traffic

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevSecOps Pipeline</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .pipeline-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      .pipeline-title {
+        text-align: center;
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 40px;
+        font-weight: 700;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .pipeline-flow {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .stage {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 20px;
+        border-radius: 15px;
+        background: white;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 5px solid;
+      }
+
+      .stage:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+      }
+
+      .stage-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .stage-content {
+        flex: 1;
+      }
+
+      .stage-title {
+        font-size: 1.4em;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2c3e50;
+      }
+
+      .stage-desc {
+        color: #7f8c8d;
+        font-size: 0.95em;
+        line-height: 1.5;
+      }
+
+      .arrow {
+        align-self: center;
+        font-size: 2em;
+        color: #3498db;
+        margin: 10px 0;
+        text-align: center;
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-10px);
+        }
+        60% {
+          transform: translateY(-5px);
+        }
+      }
+
+      .gitlab {
+        border-left-color: #fc6d26;
+      }
+      .gitlab .stage-icon {
+        background: linear-gradient(135deg, #fc6d26, #e24329);
+      }
+
+      .security {
+        border-left-color: #e74c3c;
+      }
+      .security .stage-icon {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+      }
+
+      .testing {
+        border-left-color: #f39c12;
+      }
+      .testing .stage-icon {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+      }
+
+      .build {
+        border-left-color: #27ae60;
+      }
+      .build .stage-icon {
+        background: linear-gradient(135deg, #27ae60, #229954);
+      }
+
+      .gitops {
+        border-left-color: #3498db;
+      }
+      .gitops .stage-icon {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+      }
+
+      .deploy {
+        border-left-color: #9b59b6;
+      }
+      .deploy .stage-icon {
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+      }
+
+      .monitoring {
+        border-left-color: #1abc9c;
+      }
+      .monitoring .stage-icon {
+        background: linear-gradient(135deg, #1abc9c, #16a085);
+      }
+
+      .security-tools {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .tool {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+      }
+
+      .tool:hover {
+        border-color: #3498db;
+        transform: scale(1.05);
+      }
+
+      .tool-name {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+      }
+
+      .tool-desc {
+        font-size: 0.85em;
+        color: #7f8c8d;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pipeline-container">
+      <h1 class="pipeline-title">DevSecOps Pipeline</h1>
+
+      <div class="pipeline-flow">
+        <div class="stage gitlab">
+          <div class="stage-icon">📋</div>
+          <div class="stage-content">
+            <div class="stage-title">GitLab Merge Request</div>
+            <div class="stage-desc">
+              Developer creates MR → Code review → Approval → Trigger CI/CD
+              Pipeline
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="stage security">
+          <div class="stage-icon">🔒</div>
+          <div class="stage-content">
+            <div class="stage-title">Security Scanning</div>
+            <div class="stage-desc">
+              Parallel security scans to detect vulnerabilities and secrets
+            </div>
+            <div class="security-tools">
+              <div class="tool">
+                <div class="tool-name">Gitleaks</div>
+                <div class="tool-desc">Secret detection</div>
+              </div>
+              <div class="tool">
+                <div class="tool-name">SonarQube</div>
+                <div class="tool-desc">Code quality & security</div>
+              </div>
+              <div class="tool">
+                <div class="tool-name">Trivy</div>
+                <div class="tool-desc">Container vulnerability</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="stage testing">
+          <div class="stage-icon">🧪</div>
+          <div class="stage-content">
+            <div class="stage-title">Unit Testing</div>
+            <div class="stage-desc">
+              Run automated unit tests to ensure code functionality and quality
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="stage build">
+          <div class="stage-icon">🔨</div>
+          <div class="stage-content">
+            <div class="stage-title">Build & Test</div>
+            <div class="stage-desc">
+              Build application → Run build tests → Push to container registry
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="stage gitops">
+          <div class="stage-icon">🔄</div>
+          <div class="stage-content">
+            <div class="stage-title">GitOps Trigger</div>
+            <div class="stage-desc">
+              Webhook triggers CD → Update image version in GitOps repository
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="stage deploy">
+          <div class="stage-icon">🚀</div>
+          <div class="stage-content">
+            <div class="stage-title">ArgoCD Deployment</div>
+            <div class="stage-desc">
+              ArgoCD auto-sync → Deploy to Kubernetes → Secrets from Vault
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="stage monitoring">
+          <div class="stage-icon">👁️</div>
+          <div class="stage-content">
+            <div class="stage-title">Security Monitoring</div>
+            <div class="stage-desc">
+              <strong>DefectDojo:</strong> Centralized vulnerability management
+              from Gitleaks & Trivy<br />
+              <strong>Wazuh XDR:</strong> Real-time security monitoring and
+              threat detection
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

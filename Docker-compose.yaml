@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  devsecops-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devsecops-pipeline-web
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+    # Resource limits untuk efisiensi
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.5"
+        reservations:
+          memory: 32M
+          cpus: "0.25"
+
+    # Health check
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Security context
+    security_opt:
+      - no-new-privileges:true
+
+    # Read-only root filesystem untuk security
+    read_only: true
+
+    # Temporary filesystems untuk direktori yang perlu write access
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/log/nginx
+      - /run/nginx

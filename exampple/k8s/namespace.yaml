@@ -1,0 +1,7 @@
+# k8s/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devsecops-pipeline
+  labels:
+    name: devsecops-pipeline
